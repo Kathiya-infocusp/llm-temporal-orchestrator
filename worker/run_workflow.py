@@ -27,7 +27,7 @@ async def main() -> None:
         output=json.loads(df_sample['Final_Output']),
         workflow_id=workflow_id,
     )
-    # print("data : ",data)
+
     try:
         result = await client.execute_workflow(
             InformationExtraction.run,
@@ -44,4 +44,3 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
-# @@@SNIPEND

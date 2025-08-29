@@ -7,4 +7,3 @@ class InvoiceData:
     fields_to_extract : list
     output:dict
     workflow_id: str
-# @@@SNIPEND

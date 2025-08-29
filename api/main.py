@@ -87,8 +87,6 @@ async def get_workflow_status(workflow_id: str):
         handle = temporal_client.get_workflow_handle(workflow_id)
         description = await handle.describe()
         return StatusResponse(workflow_id=workflow_id, status=description.status.name)
-    # except WorkflowNotFoundError:
-    #     raise HTTPException(status_code=404, detail=f"Workflow '{workflow_id}' not found.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -120,8 +118,7 @@ async def get_workflow_result(workflow_id: str):
             status=description.status.name,
             result=result_data,
         )
-    # except WorkflowNotFoundError:
-    #     raise HTTPException(status_code=404, detail=f"Workflow '{workflow_id}' not found.")
+
     except Exception as e:
         # This can catch application errors from within the workflow
         return ResultResponse(
@@ -130,6 +127,3 @@ async def get_workflow_result(workflow_id: str):
             result=None,
             error=str(e)
         )
-# if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run(app, host="0.0.0.0", port=8000)

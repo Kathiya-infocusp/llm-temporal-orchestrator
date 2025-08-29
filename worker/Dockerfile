@@ -7,12 +7,10 @@ WORKDIR /app
 RUN pip install uv 
 
 COPY ../pyproject.toml .
-# COPY ../uv.lock .
 
+RUN uv venv
 RUN uv sync 
-#--locked
 
-# RUN uv venv /venv && uv sync --locked
  
 # Copy the entire project
 COPY .. .

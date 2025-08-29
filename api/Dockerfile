@@ -8,7 +8,6 @@ RUN pip install uv
 
 COPY ../pyproject.toml .
 
-
 RUN uv venv
 RUN uv sync 
 

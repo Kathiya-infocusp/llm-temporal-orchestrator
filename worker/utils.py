@@ -57,6 +57,7 @@ def validate_extracted_data(extracted_data: dict, context: str, required_fields:
     if errors:
         return errors
 
+    # TODO update this section for better metrics
     # 2. Check if each value is a substring of the context
     # for key, value in extracted_data.items():
     #     if value is not None:

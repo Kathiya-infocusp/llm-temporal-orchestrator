@@ -1,6 +1,6 @@
 # LLM Service Orchestrated with Temporal (File-Based Storage)
 
-A Python service that answers questions by orchestrating an LLM workflow with Temporal. Uses local file storage for persistence - no database required!
+A Python service that answers questions by orchestrating an LLM workflow with Temporal.
 
 ---
 
@@ -27,11 +27,10 @@ docker-compose up --build
 curl -X POST "http://localhost:8000/workflows/trigger" \
   -H "Content-Type: application/json" \
   -d '{
-    "context_input": "invocie data",
-    "output": {output dict}
+    "context_input": "",
+    "output": {}
   }'
 
-  # use 
 ```
 ### Check workflow status
 ```bash
