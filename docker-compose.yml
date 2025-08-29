@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # Temporal Server (file-based storage)
+  temporal:
+    image: temporalio/temporal:latest
+    command: server start-dev --ip 0.0.0.0 --db-filename= 
+    ports:
+      - "7233:7233"
+      - "8233:8233" # Web UI port
+    volumes:
+      - temporal-data:/etc/temporal
+      
+
+  # API Service    
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - TEMPORAL_GRPC_ENDPOINT=temporal:7233
+    depends_on:
+      - temporal
+    volumes:
+      - .:/app
+
+  # Worker Service
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    environment:
+      - PYTHONPATH=/app
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - TEMPORAL_GRPC_ENDPOINT=temporal:7233
+    depends_on:
+      - temporal
+    volumes:
+      - .:/app
+
+
+# Volumes for local file storage
+volumes:
+  temporal-data:
