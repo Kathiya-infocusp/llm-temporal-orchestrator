@@ -17,14 +17,14 @@ async def main() -> None:
     # Create client connected to server at the given address
     client: Client = await Client.connect("localhost:7233")
     df = pd.read_excel('/home/ajaysinh/Downloads/converted_invoice_dataset.xlsx')
-    df_sample = df[["Input","Final_Output"]].iloc[random.randint(1, 10)]
+    df_sample = df[["Input","Final_Output"]].iloc[:1]
 
     workflow_id = f"workflow-{str(uuid.uuid4())}"
 
     data: InvoiceData = InvoiceData(
-        context_input=df_sample['Input'],
-        fields_to_extract=list(json.loads(df_sample['Final_Output']).keys()),
-        output=json.loads(df_sample['Final_Output']),
+        context_input=df_sample['Input'].values.tolist(),
+        fields_to_extract=[list(json.loads(_).keys()) for _ in df_sample['Final_Output']],
+        output=[json.loads(_) for _ in df_sample['Final_Output']],
         workflow_id=workflow_id,
     )
 

@@ -14,7 +14,7 @@ class LLMActivities:
     async def load_input(self, data: InvoiceData):
         try:
             confirmation = await asyncio.to_thread(
-                self.llm.load_input, data.fields_to_extract
+                self.llm.load_input, data,
             )
             return confirmation
         except Exception:
@@ -26,7 +26,6 @@ class LLMActivities:
         try:
             confirmation = await asyncio.to_thread(
                 self.llm.construct_prompt,
-                data.context_input,
             )
 
             return confirmation
@@ -49,7 +48,7 @@ class LLMActivities:
     async def parse_and_validate(self,data: InvoiceData):
         try:
             confirmation = await asyncio.to_thread(
-                self.llm.parse_and_validate,data.context_input, data.fields_to_extract
+                self.llm.parse_and_validate,
             )
             return confirmation
         except Exception:
@@ -61,12 +60,20 @@ class LLMActivities:
     async def persist_artifact(self, data: InvoiceData):
         try:
             confirmation = await asyncio.to_thread(
-                self.llm.parse_and_validate,data.context_input, data.fields_to_extract
+                self.llm.persist_artifact, f"./runs/{data.workflow_id}",
             )
             return confirmation
         except Exception:
-            activity.logger.exception("parse_and_validate failed")
+            activity.logger.exception("persist_artifact failed")
             raise
     
-
-
+    @activity.defn
+    async def finalize(self, data: InvoiceData):
+        try:
+            confirmation = await asyncio.to_thread(
+                self.llm.finalize,
+            )
+            return confirmation
+        except Exception:
+            activity.logger.exception("finalize failed")
+            raise

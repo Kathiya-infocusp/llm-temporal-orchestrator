@@ -19,7 +19,7 @@ async def main() -> None:
         client,
         task_queue=INFORMATION_TASK_QUEUE_NAME,
         workflows=[InformationExtraction],
-        activities=[activities.load_input, activities.construct_prompt, activities.call_model, activities.parse_and_validate],
+        activities=[activities.load_input, activities.construct_prompt, activities.call_model, activities.parse_and_validate, activities.persist_artifact, activities.finalize],
     )
     await worker.run()
 

@@ -56,10 +56,11 @@ async def trigger_workflow(request: TriggerRequest):
         raise HTTPException(status_code=503, detail="Temporal client not connected")
     
     workflow_id = f"workflow-{str(uuid.uuid4())}"
+
     data: InvoiceData = InvoiceData(
-        context_input=request.context_input,
-        fields_to_extract=list(json.loads(request.output).keys()),
-        output=json.loads(request.output),
+        context_input=json.loads(request.context_input),
+        fields_to_extract=[list(json.loads(_).keys()) for _ in json.loads(request.output)],
+        output=[json.loads(_) for _ in json.loads(request.output)],
         workflow_id=workflow_id,
     )
     try:
@@ -70,7 +71,6 @@ async def trigger_workflow(request: TriggerRequest):
             id=workflow_id,
             task_queue=INFORMATION_TASK_QUEUE_NAME,
         )
-        print(f"Started workflow: {handle.id}")
         return TriggerResponse(workflow_id=handle.id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to start workflow: {str(e)}") 

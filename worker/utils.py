@@ -46,7 +46,7 @@ def validate_extracted_data(extracted_data: dict, context: str, required_fields:
         A list of validation error messages. An empty list means validation passed.
     """
     errors = []
-    normalized_context = normalize_text(context)
+    # normalized_context = normalize_text(context)
 
     # 1. Check for presence of required keys
     for key in required_fields:

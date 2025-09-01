@@ -35,7 +35,7 @@ class InformationExtraction:
         call_model_confirmation = await workflow.execute_activity(
             LLMActivities.call_model,
             data,
-            start_to_close_timeout=timedelta(seconds=10),
+            start_to_close_timeout=timedelta(seconds=360),
             retry_policy=retry_policy,
         )
 
@@ -46,8 +46,22 @@ class InformationExtraction:
             retry_policy=retry_policy,
         )
 
+        persist_artifact_confirmation = await workflow.execute_activity(
+            LLMActivities.persist_artifact,
+            data,
+            start_to_close_timeout=timedelta(seconds=60),
+            retry_policy=retry_policy,
+        )
 
-        return parse_and_validate_confirmation
+        finalize_confirmation = await workflow.execute_activity(
+            LLMActivities.finalize,
+            data,
+            start_to_close_timeout=timedelta(seconds=60),
+            retry_policy=retry_policy,
+        )
+
+
+        return finalize_confirmation
 
 
 
