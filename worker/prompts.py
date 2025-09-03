@@ -120,7 +120,12 @@ def few_shot()->str:
                         'BANK_NAME': 'Borcelle Bank',
                         'ACCOUNT_NAME': 'Avery Davis',
                         'ACCOUNT_NUMBER': '123-456-7890',
-                        'PAYMENT_DATE': '5 July 2025'
+                        'PAYMENT_DATE': '5 July 2025',
+                        'DATE_OF_ISSUE': null, 
+                        'BILLED_TO': null,
+                        'ADDRESS': null, 
+
+
                     }
                     </OUTPUT_0>
 
@@ -154,7 +159,11 @@ The expected entities include:
 - PAYMENT_TERMS (if available)
 - PAYMENT_DATE (if applicable)
 
-Even if some entities have slightly different names or are missing, focus on extracting as much relevant information as possible and match them to the appropriate keys in the JSON format.
+Instructions:
+1. Extract as many relevant fields as possible, even if entity names differ slightly.
+2. For each missing field, explicitly return a value of null (i.e., None in Python).
+3. Ensure the output is a structured JSON object for each invoice, with all expected keys present, even if the value is null.
+4. if there is more than one item for any entity use python list style insted of using any other delimiter. 
 
 # Here is an example to guide you:
 
@@ -177,6 +186,7 @@ Extract the relevant entities from each input invoice text and structure them in
         prompt += f"\n<INVOICE_{i}>\n{context.strip()}\n</INVOICE_{i}>\n"
 
     prompt += """
+
 Respond with a **Python list of JSON strings**, where each string represents one extracted JSON object from each invoice above.
 
 Only return the final output in this format:
@@ -190,3 +200,20 @@ Only return the final output in this format:
     return prompt
 
 
+def retry_prompt(contexts:list[str],error_list:list[str])->str:
+
+    prompt = get_batched_prompt(contexts)
+
+    error_prompt ="""
+            please make sure model do not perform below errors, for each invoice
+            """ 
+    
+    for i, errors in enumerate(error_list, 1):
+
+        error_prompt += f"\n<INVOICE_{i}>\n"
+        for err in errors:
+            error_prompt += f"\n{err.strip()}\n"
+        error_prompt += f"\n</INVOICE_{i}>\n"
+
+    prompt += error_prompt
+    return prompt

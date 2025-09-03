@@ -39,6 +39,7 @@ class InformationExtraction:
             retry_policy=retry_policy,
         )
 
+
         parse_and_validate_confirmation = await workflow.execute_activity(
             LLMActivities.parse_and_validate,
             data,
@@ -46,15 +47,23 @@ class InformationExtraction:
             retry_policy=retry_policy,
         )
 
-        persist_artifact_confirmation = await workflow.execute_activity(
-            LLMActivities.persist_artifact,
+        if parse_and_validate_confirmation['status'] == "failed":
+            if "Failed in validation criteria" in parse_and_validate_confirmation['error']:
+                retry_model_call_confirmation = await workflow.execute_activity(
+                    LLMActivities.retry_model_call,
+                    data,
+                    start_to_close_timeout=timedelta(seconds=1080),
+                )
+
+        finalize_confirmation = await workflow.execute_activity(
+            LLMActivities.finalize,
             data,
             start_to_close_timeout=timedelta(seconds=60),
             retry_policy=retry_policy,
         )
 
-        finalize_confirmation = await workflow.execute_activity(
-            LLMActivities.finalize,
+        persist_artifact_confirmation = await workflow.execute_activity(
+            LLMActivities.persist_artifact,
             data,
             start_to_close_timeout=timedelta(seconds=60),
             retry_policy=retry_policy,

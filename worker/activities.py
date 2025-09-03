@@ -55,6 +55,16 @@ class LLMActivities:
             activity.logger.exception("parse_and_validate failed")
             raise
 
+    @activity.defn
+    async def retry_model_call(self,data: InvoiceData):
+        try:
+            confirmation = await asyncio.to_thread(
+                self.llm.retry_model_call,
+            )
+            return confirmation
+        except Exception:
+            activity.logger.exception("retry_model_call failed")
+            raise
 
     @activity.defn
     async def persist_artifact(self, data: InvoiceData):
