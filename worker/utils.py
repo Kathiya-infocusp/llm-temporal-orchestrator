@@ -1,4 +1,6 @@
+import os 
 import re
+import json
 import unicodedata
 
 
@@ -14,6 +16,16 @@ REQUIRED_FIELDS = [
     "ITEM_DESCRIPTION", "QTY", "UNIT_PRICE", "AMOUNT",
     "TOTAL_AMOUNT", "BANK_NAME", "ACCOUNT_NAME", "ACCOUNT_NUMBER"
 ]
+
+def save_json_artifact(data: dict, output_dir: str, filename: str):
+    """
+    Saves a dictionary as a JSON file in the specified directory.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    file_path = os.path.join(output_dir, filename)
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2)
+    return file_path
 
 def match(gt: str, pred: str | list[str]) -> bool:
     if gt is None and pred is None:

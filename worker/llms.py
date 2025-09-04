@@ -4,30 +4,21 @@ import json
 import pickle 
 import time
 
-from dotenv import load_dotenv
 from pathlib import Path
+from typing import Optional
+from dotenv import load_dotenv
 import google.generativeai as genai
 from google.api_core import exceptions
-from typing import Optional
 
+
+from worker import utils
 from worker.shared import InvoiceData
 from worker.prompts import retry_prompt
 from worker.prompts import get_batched_prompt
-from worker.utils import evaluate
-from worker.utils import normalize_text
-from worker.utils import validate_extracted_data
+
+
 
 load_dotenv() 
-
-def save_json_artifact(data: dict, output_dir: str, filename: str):
-    """
-    Saves a dictionary as a JSON file in the specified directory.
-    """
-    os.makedirs(output_dir, exist_ok=True)
-    file_path = os.path.join(output_dir, filename)
-    with open(file_path, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=2)
-    return file_path
 
 class gemini:
     def __init__(self,name:str = "gemini-2.5-pro"):
@@ -63,7 +54,7 @@ class gemini:
         #     "required": fields_to_extract
         # }
 
-        self.inovices = [normalize_text(_) for _ in data.context_input]
+        self.inovices = [utils.normalize_text(_) for _ in data.context_input]
         self.output = None
         if data.output:
             self.output = [json.loads(_) for _ in data.output] 
@@ -85,8 +76,7 @@ class gemini:
             self.model = genai.GenerativeModel(
                         model_name=self.name,
                         generation_config={
-                            "response_mime_type": "application/json",
-                            # "response_schema": self.json_schema  ## TODO add schema for list of json objects 
+                            "response_mime_type": "application/json",       
                         }
                     )
             
@@ -102,10 +92,8 @@ class gemini:
             }
             return {"status":"success","error" : "", "details": ""}
         except exceptions.GoogleAPICallError as e:
-            print(f"An error occurred with the Google API: {e}")
             return {"status":"failed","error": "API call failed", "details": str(e)}
         except Exception as e:
-            print(f"An unexpected error occurred: {e}")
             return {"status":"failed","error": "An unexpected error occurred", "details": str(e)}
 
     def parse_and_validate(self) ->dict:
@@ -115,25 +103,22 @@ class gemini:
                 extracted_responses = [ json.loads(_) for _ in extracted_responses]
             
         except json.JSONDecodeError as e:
-            print(f"Failed to decode JSON from model response.")
             return {"status":"failed","error": "Invalid JSON response from model", "details": str(e)}
 
         try:
             self.validated_response = []
             self.error_response = []
             for i in range(len(extracted_responses)):
-                validation_error = validate_extracted_data(extracted_responses[i], self.inovices[i])
+                validation_error = utils.validate_extracted_data(extracted_responses[i], self.inovices[i])
                 if validation_error:
-                    print(f"Failed in validation criteria from model response for index : ",[str(e) for e in validation_error])
+                    # print(f"Failed in validation criteria from model response for index : ",[str(e) for e in validation_error])
                     self.error_response.append((i,validation_error))
                 
                 self.validated_response.append(extracted_responses[i])
         except Exception as e:
-            print(f"An unexpected error occurred: {e}")
             return {"status":"failed","error": "An unexpected error occurred", "details": str(e)}
         
         if not self.validated_response:
-                print(f"Failed in validation criteria from model response.")
                 return {"status":"failed","error": "Failed in validation criteria from model response", "details": self.validated_response}
         else:      
             return {"status":"success","error" : "", "details": ""}
@@ -145,6 +130,9 @@ class gemini:
         takes previously errorenous reponse, updates prompts with erros, and runs model 3 time to generate valid response,
         """
 
+        if not self.error_response:
+            return {"status":"success","error" : "", "details": ""}
+        
         ids,erros = zip(*self.error_response)
         erroneous_context = [self.inovices[_] for _ in ids]
 
@@ -158,9 +146,9 @@ class gemini:
             
             error_response = []
             for j in range(len(extracted_responses)):
-                validation_error = validate_extracted_data(extracted_responses[j], erroneous_context[j])
+                validation_error = utils.validate_extracted_data(extracted_responses[j], erroneous_context[j])
                 if validation_error:
-                    print(f"Failed in validation criteria from retry model response for index : ",[str(e) for e in validation_error])
+                    # print(f"Failed in validation criteria from retry model response for index : ",[str(e) for e in validation_error])
                     error_response.append((j,validation_error))
                 else:
                     self.validated_response[ids[j]] = extracted_responses[j]
@@ -178,10 +166,8 @@ class gemini:
         """
         add evalution and summery 
         """
-        #TODO add evalution script and share the results on final call.
 
-        self.evalution_result = evaluate(self.output,self.validated_response)
-
+        self.evalution_result = utils.evaluate(self.output,self.validated_response)
 
         return { "evalution_resul " : self.evalution_result, "predictions" : self.validated_response}
 
@@ -195,7 +181,7 @@ class gemini:
 
             if self.output:
                 input_data['ground_truth'] = self.output
-            save_json_artifact(input_data,path,'input_data.json')
+            utils.save_json_artifact(input_data,path,'input_data.json')
 
 
             if self.model_reponse:
@@ -204,13 +190,13 @@ class gemini:
                     'metadata' : self.metadata,
                     'latency' : self.latency
                 }
-                save_json_artifact(response_artifacts,path,'model_response.json')
+                utils.save_json_artifact(response_artifacts,path,'model_response.json')
 
 
             if self.validated_response:
-                save_json_artifact(self.validated_response,path,'extratced_model_response.json')
+                utils.save_json_artifact(self.validated_response,path,'extratced_model_response.json')
             if self.evalution_result:
-                save_json_artifact(self.evalution_result,path,'evalution_result.json')
+                utils.save_json_artifact(self.evalution_result,path,'evalution_result.json')
 
             
             file_path = os.path.join(path, 'final_prompt.txt')
@@ -224,5 +210,4 @@ class gemini:
             
             return {"status":"success","error" : "", "details": ""}
         except Exception as e:
-            print(f"Failed to save model artifacts.")
             return {"status":"failed","error": "Failed to save artifacts", "details": str(e)}
