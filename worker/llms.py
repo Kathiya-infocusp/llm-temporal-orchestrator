@@ -1,5 +1,4 @@
 import os
-
 import json
 import pickle 
 import time
@@ -9,7 +8,6 @@ from typing import Optional
 from dotenv import load_dotenv
 import google.generativeai as genai
 from google.api_core import exceptions
-
 
 from worker import utils
 from worker.shared import InvoiceData
@@ -57,7 +55,7 @@ class gemini:
         self.inovices = [utils.normalize_text(_) for _ in data.context_input]
         self.output = None
         if data.output:
-            self.output = [json.loads(_) for _ in data.output] 
+            self.output = data.output
         self.required_fields = data.fields_to_extract
 
         return {"status":"success","error" : "", "details": ""}
@@ -118,8 +116,8 @@ class gemini:
         except Exception as e:
             return {"status":"failed","error": "An unexpected error occurred", "details": str(e)}
         
-        if not self.validated_response:
-                return {"status":"failed","error": "Failed in validation criteria from model response", "details": self.validated_response}
+        if self.error_response:
+                return {"status":"failed","error": "Failed in validation criteria from model response", "details": self.error_response}
         else:      
             return {"status":"success","error" : "", "details": ""}
 
@@ -133,7 +131,7 @@ class gemini:
         if not self.error_response:
             return {"status":"success","error" : "", "details": ""}
         
-        ids,erros = zip(*self.error_response)
+        ids,erros = map(list, zip(*self.error_response))
         erroneous_context = [self.inovices[_] for _ in ids]
 
         for i in range(3):
@@ -196,7 +194,7 @@ class gemini:
             if self.validated_response:
                 utils.save_json_artifact(self.validated_response,path,'extratced_model_response.json')
             if self.evalution_result:
-                utils.save_json_artifact(self.evalution_result,path,'evalution_result.json')
+                utils.save_json_artifact(self.evalution_result,path / 'eval','evalution_result.json')
 
             
             file_path = os.path.join(path, 'final_prompt.txt')

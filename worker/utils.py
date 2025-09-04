@@ -207,11 +207,11 @@ def evaluate(gt_data: List[Dict], pred_data: List[Dict]) -> Dict:
     doc_accuracy = exact_match_count / total_documents
 
     final_result = {
-        "field_metrics": metrics_output,
         "macro_f1": round(macro_f1, 4),
         "document_accuracy": round(doc_accuracy, 4),
+        "exact_matches": exact_match_count,
         "documents_evaluated": total_documents,
-        "exact_matches": exact_match_count
+        "field_metrics": metrics_output,
     }
 
     return final_result
