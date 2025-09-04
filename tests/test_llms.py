@@ -7,54 +7,6 @@ from google.api_core import exceptions
 from worker.llms import  gemini
 from worker.shared import InvoiceData
 
-
-# class TestFakeModel(unittest.TestCase):
-    
-#     def setUp(self):
-#         self.model = FakeModel()
-#         self.test_data = InvoiceData(
-#             context_input=["Test invoice content"],
-#             output=[],
-#             fields_to_extract=["INVOICE_NUMBER", "TOTAL_AMOUNT"]
-#         )
-    
-#     # Success cases
-#     def test_load_input_success(self):
-#         result = self.model.load_input(self.test_data)
-#         self.assertEqual(result["status"], "success")
-#         self.assertEqual(len(self.model.inovices), 1)
-    
-#     def test_construct_prompt_success(self):
-#         self.model.load_input(self.test_data)
-#         result = self.model.construct_prompt()
-#         self.assertEqual(result["status"], "success")
-#         self.assertIsNotNone(self.model.prompt)
-    
-#     def test_call_model_success(self):
-#         result = self.model.call_model()
-#         self.assertEqual(result["status"], "success")
-#         self.assertIsNotNone(self.model.model_reponse)
-    
-#     def test_parse_and_validate_success(self):
-#         self.model.call_model()
-#         result = self.model.parse_and_validate()
-#         self.assertEqual(result["status"], "success")
-#         self.assertIsInstance(self.model.validated_response, list)
-    
-#     def test_finalize_success(self):
-#         self.model.call_model()
-#         self.model.parse_and_validate()
-#         result = self.model.finalize()
-#         self.assertIn("predictions", result)
-#         self.assertIn("evalution_resul ", result)
-    
-#     # Failure cases
-#     def test_load_input_none_data(self):
-#         result = self.model.load_input(None)
-#         self.assertEqual(result["status"], "failed")
-#         self.assertIn("data is none", result["error"])
-
-
 class TestGeminiModel(unittest.TestCase):
     
     @patch('worker.llms.genai.configure')
