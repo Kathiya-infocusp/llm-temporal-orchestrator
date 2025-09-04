@@ -15,13 +15,7 @@ from worker.prompts import retry_prompt
 from worker.prompts import get_batched_prompt
 from worker.utils import evaluate
 from worker.utils import normalize_text
-from worker.utils import simplify_response 
 from worker.utils import validate_extracted_data
-
-
-
-
-
 
 load_dotenv() 
 
@@ -50,6 +44,8 @@ class gemini:
 
         self.model_reponse=None
         self.retry_prompt=""
+        self.evalution_result=None
+        self.validated_response=None
         
     def load_input(self,data:InvoiceData) -> dict:
         """
@@ -99,7 +95,11 @@ class gemini:
             end_time = time.time()
             self.model_reponse = response
             self.latency = end_time - start_time 
-            self.metadata = response.usage_metadata
+            self.metadata = {
+                "prompt_token_count":response.usage_metadata.prompt_token_count,
+                "candidates_token_count": response.usage_metadata.candidates_token_count,
+                "total_token_count": response.usage_metadata.total_token_count,
+            }
             return {"status":"success","error" : "", "details": ""}
         except exceptions.GoogleAPICallError as e:
             print(f"An error occurred with the Google API: {e}")
@@ -126,8 +126,8 @@ class gemini:
                 if validation_error:
                     print(f"Failed in validation criteria from model response for index : ",[str(e) for e in validation_error])
                     self.error_response.append((i,validation_error))
-                else:
-                    self.validated_response.append(extracted_responses[i])
+                
+                self.validated_response.append(extracted_responses[i])
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
             return {"status":"failed","error": "An unexpected error occurred", "details": str(e)}
@@ -160,10 +160,10 @@ class gemini:
             for j in range(len(extracted_responses)):
                 validation_error = validate_extracted_data(extracted_responses[j], erroneous_context[j])
                 if validation_error:
-                    print(f"Failed in validation criteria from model response for index : ",[str(e) for e in validation_error])
+                    print(f"Failed in validation criteria from retry model response for index : ",[str(e) for e in validation_error])
                     error_response.append((j,validation_error))
                 else:
-                    self.validated_response.insert(ids[j],extracted_responses[j])
+                    self.validated_response[ids[j]] = extracted_responses[j]
                     erroneous_context.pop(j)
                     erros.pop(j)
 
@@ -195,13 +195,24 @@ class gemini:
 
             if self.output:
                 input_data['ground_truth'] = self.output
-
             save_json_artifact(input_data,path,'input_data.json')
-            save_json_artifact(self.validated_response,path,'extratced_model_response.json')
-            save_json_artifact(self.evalution_result,path,'evalution_result.json')
 
-            # save_json_artifact(self.model_reponse.text,path,'model_response.json')
 
+            if self.model_reponse:
+                response_artifacts = {
+                    'model_response' : self.model_reponse.text,
+                    'metadata' : self.metadata,
+                    'latency' : self.latency
+                }
+                save_json_artifact(response_artifacts,path,'model_response.json')
+
+
+            if self.validated_response:
+                save_json_artifact(self.validated_response,path,'extratced_model_response.json')
+            if self.evalution_result:
+                save_json_artifact(self.evalution_result,path,'evalution_result.json')
+
+            
             file_path = os.path.join(path, 'final_prompt.txt')
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(self.prompt) 

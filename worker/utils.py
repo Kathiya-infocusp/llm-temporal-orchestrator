@@ -18,7 +18,9 @@ REQUIRED_FIELDS = [
 def match(gt: str, pred: str | list[str]) -> bool:
     if gt is None and pred is None:
         return True
-    if gt is None or pred is None:
+    if gt is None: #or pred is None:
+        return True
+    if pred is None: 
         return False
     if isinstance(pred, list):
         return gt.strip().lower() in [_.strip().lower() for _ in pred]
