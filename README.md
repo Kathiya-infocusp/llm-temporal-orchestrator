@@ -11,13 +11,27 @@ A Python service that answers questions by orchestrating an LLM workflow with Te
 cp .env.example .env
 # Add your Gemini API key to .env
 ```
-### Start all services:
+## Reproducible Local Run
+
+### Option 1: local run (Recommended)
 ```bash
-docker-compose up --build
+bash ./run_local.sh
 ```
+
+### Option 2: Local Temporal Server
+```bash
+# Start Temporal server
+temporal server start-dev
+
+# In separate terminals:
+python -m worker.run_worker  # Start worker
+python -m api.main     # Start API
+```
+
+
 ### Access the services:
- * **API**: http://localhost:8000
  * **Temporal UI**: http://localhost:8233
+ * **API**: http://localhost:8000
  * **API Docs**: http://localhost:8000/docs
 
 
@@ -40,25 +54,37 @@ curl "http://localhost:8000/workflows/{workflow_id}/status"
 ```bash
 curl "http://localhost:8000/workflows/{workflow_id}/result"
 ```
-### Get workflow artifacts #TODO
-```bash
-curl "http://localhost:8000/artifacts/{workflow_id}"
+
+
+## Observability
+
+### Structured Logging
+JSON logs with activity metrics:
+```json
+{
+  "ts": "2025-08-22T10:30:11Z",
+  "workflowId": "wf_abc123",
+  "activity": "call_model",
+  "attempt": 2,
+  "latency_ms": 853,
+  "token_in": 1250,
+  "token_out": 340,
+  "status": "success"
+}
 ```
-### List all artifacts #TODO
-```bash
-curl "http://localhost:8000/artifacts"
-```
+
 ### Key Features
     ✅ Strict JSON Output - LLM responses are validated and structured
     ✅ Docker Containerized - Easy setup and deployment
     ✅ Temporal Orchestration - Reliable workflow execution with retries
     ✅ REST API - Standard HTTP endpoints for integration
+    ✅ Structured Logging - JSON logs with metrics and attempt tracking
     ✅ Artifact Management - Browse and retrieve stored workflow data [todo]
 
 ## Workflow Process 
     1. Trigger: POST request starts a Temporal workflow
     2. LLM Call: Worker calls Gemini API with structured prompt
     3. JSON Validation: Response is parsed and validated
-    4. Artifact Storage: Metadata and logs are stored [todo]
+    4. Artifact Storage: Metadata and logs are stored 
     5. Result Return: Structured JSON result is available via API
 
