@@ -39,6 +39,15 @@ class InformationExtraction:
             retry_policy=retry_policy,
         )
 
+        if call_model_confirmation['status'] == "failed":
+            if "API call failed" in call_model_confirmation['error']:
+                persist_artifact_confirmation = await workflow.execute_activity(
+                    LLMActivities.persist_artifact,
+                    data,
+                    start_to_close_timeout=timedelta(seconds=60),
+                    retry_policy=retry_policy,
+                )
+                return { "evalution_resul " : None, "predictions" : None}
 
         parse_and_validate_confirmation = await workflow.execute_activity(
             LLMActivities.parse_and_validate,
