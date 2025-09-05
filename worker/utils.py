@@ -3,8 +3,8 @@ import re
 import json
 import unicodedata
 
-
-
+from datetime import datetime
+from pathlib import Path
 from typing import List, Dict
 from sklearn.metrics import  f1_score
 from sklearn.metrics import recall_score
@@ -216,3 +216,17 @@ def evaluate(gt_data: List[Dict], pred_data: List[Dict]) -> Dict:
 
     return final_result
 
+def log_structured(workflow_id: str, activity: str, **kwargs):
+    
+    log_dir = Path(f"./runs/{workflow_id}")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    
+    log_entry = {
+        "ts": datetime.utcnow().isoformat() + "Z",
+        "workflowId": workflow_id,
+        "activity": activity,
+        **kwargs
+    }
+    
+    with open(log_dir / "workflow.log", "a") as f:
+        f.write(json.dumps(log_entry) + "\n")

@@ -2,6 +2,7 @@ import asyncio
 
 from temporalio import activity
 
+from worker import utils
 from worker.llms import gemini
 from worker.shared import InvoiceData
 
@@ -16,6 +17,10 @@ class LLMActivities:
             confirmation = await asyncio.to_thread(
                 self.llm.load_input, data,
             )
+            utils.log_structured(
+                data.workflow_id, "load_input",
+                attempt=activity.info().attempt, status=confirmation['status']
+            )
             return confirmation
         except Exception:
             activity.logger.exception("load input failed")
@@ -27,7 +32,10 @@ class LLMActivities:
             confirmation = await asyncio.to_thread(
                 self.llm.construct_prompt,
             )
-
+            utils.log_structured(
+                data.workflow_id, "construct_prompt",
+                attempt=activity.info().attempt, status=confirmation['status']
+            )
             return confirmation
         except Exception:
             activity.logger.exception("prompts constuction failed")
@@ -39,6 +47,17 @@ class LLMActivities:
             confirmation = await asyncio.to_thread(
                 self.llm.call_model
             )
+
+            metadata = getattr(self.llm, 'metadata', {})
+            latency_ms = getattr(self.llm, 'latency', 0)
+            utils.log_structured(
+                data.workflow_id, "call_model",
+                attempt=activity.info().attempt, latency_ms=latency_ms,
+                token_in=metadata.get('prompt_token_count', 0),
+                token_out=metadata.get('candidates_token_count', 0),
+                status=confirmation['status']
+            )
+
             return confirmation
         except Exception:
             activity.logger.exception("call model failed")
@@ -49,6 +68,11 @@ class LLMActivities:
         try:
             confirmation = await asyncio.to_thread(
                 self.llm.parse_and_validate,
+            )
+            utils.log_structured(
+                data.workflow_id, "parse_and_validate",
+                attempt=activity.info().attempt,
+                status=confirmation['status']
             )
             return confirmation
         except Exception:
@@ -61,6 +85,10 @@ class LLMActivities:
             confirmation = await asyncio.to_thread(
                 self.llm.retry_model_call,
             )
+            utils.log_structured(
+                data.workflow_id, "retry_model_call",
+                attempt=activity.info().attempt, status=confirmation['status']
+            )
             return confirmation
         except Exception:
             activity.logger.exception("retry_model_call failed")
@@ -72,6 +100,11 @@ class LLMActivities:
             confirmation = await asyncio.to_thread(
                 self.llm.persist_artifact, f"./runs/{data.workflow_id}",
             )
+            utils.log_structured(
+                data.workflow_id, "persist_artifact",
+                path=f"./runs/{data.workflow_id}",
+                attempt=activity.info().attempt, status=confirmation['status']
+            )
             return confirmation
         except Exception:
             activity.logger.exception("persist_artifact failed")
@@ -82,6 +115,11 @@ class LLMActivities:
         try:
             confirmation = await asyncio.to_thread(
                 self.llm.finalize,
+            )
+            utils.log_structured(
+                data.workflow_id, "finalize",
+                attempt=activity.info().attempt,
+                status="success"
             )
             return confirmation
         except Exception:
