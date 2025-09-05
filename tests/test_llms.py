@@ -52,7 +52,7 @@ class TestGeminiModel(unittest.TestCase):
     def test_parse_and_validate_success(self):
         self.model.load_input(self.test_data)
         mock_response = MagicMock()
-        mock_response.text = """[{
+        mock_response = """[{
             "INVOICE_NUMBER": "123", 
             "TOTAL_AMOUNT": "100", 
             "DATE_OF_ISSUE": null, 
@@ -108,7 +108,7 @@ class TestGeminiModel(unittest.TestCase):
     
     def test_parse_and_validate_invalid_json(self):
         mock_response = MagicMock()
-        mock_response.text = "invalid json"
+        mock_response = "invalid json"
         self.model.model_reponse = mock_response
         
         result = self.model.parse_and_validate()
@@ -118,7 +118,7 @@ class TestGeminiModel(unittest.TestCase):
     def test_parse_and_validate_no_valid_response(self):
         self.model.load_input(self.test_data)
         mock_response = MagicMock()
-        mock_response.text = '[{"INVALID_FIELD": "value"}]'
+        mock_response = '[{"INVALID_FIELD": "value"}]'
         self.model.model_reponse = mock_response
         
         result = self.model.parse_and_validate()

@@ -81,7 +81,7 @@ class gemini:
             start_time = time.time()
             response = self.model.generate_content(self.prompt)
             end_time = time.time()
-            self.model_reponse = response
+            self.model_reponse = response.text
             self.latency = end_time - start_time 
             self.metadata = {
                 "prompt_token_count":response.usage_metadata.prompt_token_count,
@@ -96,7 +96,7 @@ class gemini:
 
     def parse_and_validate(self) ->dict:
         try:
-            extracted_responses = json.loads(self.model_reponse.text)
+            extracted_responses = json.loads(self.model_reponse)
             if type(extracted_responses[0]) == str:
                 extracted_responses = [ json.loads(_) for _ in extracted_responses]
             
@@ -109,7 +109,6 @@ class gemini:
             for i in range(len(extracted_responses)):
                 validation_error = utils.validate_extracted_data(extracted_responses[i], self.inovices[i])
                 if validation_error:
-                    # print(f"Failed in validation criteria from model response for index : ",[str(e) for e in validation_error])
                     self.error_response.append((i,validation_error))
                 
                 self.validated_response.append(extracted_responses[i])
@@ -146,7 +145,6 @@ class gemini:
             for j in range(len(extracted_responses)):
                 validation_error = utils.validate_extracted_data(extracted_responses[j], erroneous_context[j])
                 if validation_error:
-                    # print(f"Failed in validation criteria from retry model response for index : ",[str(e) for e in validation_error])
                     error_response.append((j,validation_error))
                 else:
                     self.validated_response[ids[j]] = extracted_responses[j]
@@ -179,12 +177,16 @@ class gemini:
 
             if self.output:
                 input_data['ground_truth'] = self.output
+
             utils.save_json_artifact(input_data,path,'input_data.json')
 
+            file_path = os.path.join(path, 'final_prompt.txt')
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(self.prompt) 
 
             if self.model_reponse:
                 response_artifacts = {
-                    'model_response' : self.model_reponse.text,
+                    'model_response' : self.model_reponse,
                     'metadata' : self.metadata,
                     'latency' : self.latency
                 }
@@ -194,12 +196,7 @@ class gemini:
             if self.validated_response:
                 utils.save_json_artifact(self.validated_response,path,'extratced_model_response.json')
             if self.evalution_result:
-                utils.save_json_artifact(self.evalution_result,path / 'eval','evalution_result.json')
-
-            
-            file_path = os.path.join(path, 'final_prompt.txt')
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(self.prompt) 
+                utils.save_json_artifact(self.evalution_result,os.path.join(path,'eval'),'metrics.json')
 
             if self.retry_prompt:
                 file_path = os.path.join(path, 'retry_prompt.txt')
