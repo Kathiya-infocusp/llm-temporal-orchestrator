@@ -130,30 +130,41 @@ class gemini:
         if not self.error_response:
             return {"status":"success","error" : "", "details": ""}
         
-        ids,erros = map(list, zip(*self.error_response))
+        ids, erros = map(list, zip(*self.error_response))
         erroneous_context = [self.inovices[_] for _ in ids]
 
         for i in range(3):
-            prompt = retry_prompt(erroneous_context,erros)
+            prompt = retry_prompt(erroneous_context, erros)
 
             response = self.model.generate_content(prompt)
             extracted_responses = json.loads(response.text)
-            if type(extracted_responses[0]) == str:
-                extracted_responses = [ json.loads(_) for _ in extracted_responses]
+            if extracted_responses and isinstance(extracted_responses[0], str):
+                extracted_responses = [json.loads(_) for _ in extracted_responses]
             
-            error_response = []
-            for j in range(len(extracted_responses)):
-                validation_error = utils.validate_extracted_data(extracted_responses[j], erroneous_context[j])
+            # Track successful validations
+            successful_indices = []
+            remaining_errors = []
+            
+            for j, extracted_response in enumerate(extracted_responses):
+                validation_error = utils.validate_extracted_data(extracted_response, erroneous_context[j])
                 if validation_error:
-                    error_response.append((j,validation_error))
+                    remaining_errors.append(validation_error)
                 else:
-                    self.validated_response[ids[j]] = extracted_responses[j]
-                    erroneous_context.pop(j)
-                    erros.pop(j)
+                    self.validated_response[ids[j]] = extracted_response
+                    successful_indices.append(j)
 
-            if not error_response:
+            # Remove successful items in reverse order
+            for j in reversed(successful_indices):
+                erroneous_context.pop(j)
+                erros.pop(j)
+                ids.pop(j)
+
+            if not remaining_errors:
                 self.retry_prompt += prompt
-                return {"status":"success","error" : "", "details": ""} 
+                return {"status":"success","error" : "", "details": ""}
+            
+            # Update error list for next iteration
+            erros = remaining_errors
             
         return {"status":"failed","error": "Failed to generate correct response in 3 attempts", "details": ""}
 

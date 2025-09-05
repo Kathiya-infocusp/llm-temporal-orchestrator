@@ -30,10 +30,10 @@ while true; do
   if [ "$STATUS" = "COMPLETED" ]; then
     break
   elif [ "$STATUS" = "FAILED" ]; then
-    echo "❌ Workflow failed"
+    echo "Workflow failed"
     exit 1
   elif [ "$STATUS" = "CANCELED" ]; then
-    echo "❌ Workflow CANCELED"
+    echo "Workflow CANCELED"
     exit 1
   fi
   
