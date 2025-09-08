@@ -87,7 +87,7 @@ def validate_extracted_data(extracted_data: dict, context: str) -> list:
     """
     errors = []
     normalized_context = normalize_text(context)
-    normalized_input = {key.upper(): key for key in extracted_data}
+    normalized_input = {key.upper(): key for key in extracted_data} 
 
     expected_keys = {
         "INVOICE_NUMBER": ["INVOICE_NUMBER"],
@@ -138,10 +138,12 @@ def validate_extracted_data(extracted_data: dict, context: str) -> list:
     # TODO update this section for better metrics
     # 2. Check if each value is a substring of the context
     for key, values in extracted_data.items():
-        if values is not None:
-            if type(values) == str : 
+        if values :
+            if isinstance(values, str):
                 values = [values]
             for value in values:
+                if value == 'None':
+                    continue
                 normalized_value = normalize_text(value)
                 if normalized_value not in normalized_context:
                     errors.append(

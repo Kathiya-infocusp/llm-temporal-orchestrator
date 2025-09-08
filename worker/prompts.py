@@ -161,9 +161,10 @@ The expected entities include:
 
 Instructions:
 1. Extract as many relevant fields as possible, even if entity names differ slightly.
-2. For each missing field, explicitly return a value of null (i.e., None in Python).
-3. Ensure the output is a structured JSON object for each invoice, with all expected keys present, even if the value is null.
-4. if there is more than one item for any entity use python list style insted of using any other delimiter. 
+2. For each missing field, explicitly return null.
+4. strictly DO NOT return **None** on missing filed, return **null**
+5. Ensure the output is a structured JSON object for each invoice, with all expected keys present, even if the value is null.
+6. if there is more than one item for any entity use python list style insted of using any other delimiter. 
 
 # Here is an example to guide you:
 

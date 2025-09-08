@@ -176,7 +176,7 @@ class gemini:
 
         self.evalution_result = utils.evaluate(self.output,self.validated_response)
 
-        return { "evalution_resul " : self.evalution_result, "predictions" : self.validated_response}
+        return { "evalution_result " : self.evalution_result, "predictions" : self.validated_response}
 
         
     def persist_artifact(self,path:Path):
