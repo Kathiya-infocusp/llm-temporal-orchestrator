@@ -68,8 +68,7 @@ def normalize_text(text: str) -> str:
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
-def validate_extracted_data(extracted_data: dict, context: str) -> list:
-
+def validate_extracted_data(extracted_data: dict, context: str, required_fields: List[str] = REQUIRED_FIELDS) -> list:
     """
     Validates the extracted JSON data against a set of rules.
 
@@ -118,8 +117,11 @@ def validate_extracted_data(extracted_data: dict, context: str) -> list:
     }
 
     # 1. Check for presence of required keys
-    for key in REQUIRED_FIELDS:
-        synonyms = expected_keys[key]
+    for key in required_fields:
+        if key in expected_keys.keys():
+            synonyms = expected_keys[key]
+        else:
+            synonyms=[key]
         match_found = False
         for synonym in synonyms:
             synonym_upper = synonym.upper()

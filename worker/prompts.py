@@ -42,96 +42,100 @@ def get_prompt(context:str)->str:
 def few_shot()->str:
 
     few_shot_prompt = """
-                you can follow below example, 
+you can follow below example, 
 
-                <EXAMPLE>
-                    <INVOICE_0>
-                      Cream and White Simple Minimalist Catering Services Invoice
+<EXAMPLE>
+    <INVOICE_0>
+    Required fields:
+    [TOTAL_AMOUNT, DUE_AMOUNT, INVOICE_NUMBER, ITEM_DESCRIPTION, QTY, UNIT_PRICE, BANK_NAME, ACCOUNT_NAME, ACCOUNT_NUMBER, PAYMENT_DATE]
+    
+    Context :
+        Cream and White Simple Minimalist Catering Services Invoice
 
-                        INVOICE
-                        Borcelle | Catering Services
+        INVOICE
+        Borcelle | Catering Services
 
-                        DESCRIPTION QTY TOTAL
+        DESCRIPTION QTY TOTAL
 
-                        TOTAL $1000
+        TOTAL $1000
 
-                        ISSUED TO:
+        ISSUED TO:
 
-                        Amount  due $550
+        Amount  due $550
 
-                        INVOICE NO:
+        INVOICE NO:
 
-                        #612345
+        #612345
 
-                        UNIT PRICE
+        UNIT PRICE
 
-                        BANK DETAILS
+        BANK DETAILS
 
-                        Grilled Chicken 2 $200
+        Grilled Chicken 2 $200
 
-                        Bruschetta 2 $200
+        Bruschetta 2 $200
 
-                        Roasted Vegetables 2 $200
+        Roasted Vegetables 2 $200
 
-                        Tiramisu 2 $200
+        Tiramisu 2 $200
 
-                        Helena Paquet
-                        Borcelle #029 Client
-                        hello@reallygreatsite.com
+        Helena Paquet
+        Borcelle #029 Client
+        hello@reallygreatsite.com
 
-                        Total
+        Total
 
-                        Tax
+        Tax
 
-                        $500
-                        10%
+        $500
+        10%
 
-                        Fresh Fruit Punch 2 $200
+        Fresh Fruit Punch 2 $200
 
-                        MARCH.06.2024
+        MARCH.06.2024
 
-                        100
+        100
 
-                        100
+        100
 
-                        100
+        100
 
-                        100
+        100
 
-                        100
+        100
 
-                        Borcelle Bank
-                        Account Name: Avery Davis
-                        Account No.: 123-456-7890
-                        Pay by: 5 July 2025
+        Borcelle Bank
+        Account Name: Avery Davis
+        Account No.: 123-456-7890
+        Pay by: 5 July 2025
 
-                    </INVOICE_0>
-                    
+    </INVOICE_0>
+    
 
-                    <OUTPUT_0>
+    <OUTPUT_0>
 
-                    {
-                        'TOTAL_AMOUNT': '$1000',
-                        'DUE_AMOUNT': '$550',
-                        'INVOICE_NUMBER': '#612345',
-                        'ITEM_DESCRIPTION': 'Grilled Chicken',
-                        'QTY': '2',
-                        'UNIT_PRICE': '$200',
-                        'BANK_NAME': 'Borcelle Bank',
-                        'ACCOUNT_NAME': 'Avery Davis',
-                        'ACCOUNT_NUMBER': '123-456-7890',
-                        'PAYMENT_DATE': '5 July 2025',
-                        'DATE_OF_ISSUE': null, 
-                        'BILLED_TO': null,
-                        'ADDRESS': null, 
+    {
+        'TOTAL_AMOUNT': '$1000',
+        'DUE_AMOUNT': '$550',
+        'INVOICE_NUMBER': '#612345',
+        'ITEM_DESCRIPTION': 'Grilled Chicken',
+        'QTY': '2',
+        'UNIT_PRICE': '$200',
+        'BANK_NAME': 'Borcelle Bank',
+        'ACCOUNT_NAME': 'Avery Davis',
+        'ACCOUNT_NUMBER': '123-456-7890',
+        'PAYMENT_DATE': '5 July 2025',
+        'DATE_OF_ISSUE': null, 
+        'BILLED_TO': null,
+        'ADDRESS': null, 
 
 
-                    }
-                    </OUTPUT_0>
+    }
+    </OUTPUT_0>
 
-                </EXAMPLE>
-        
-        """
+</EXAMPLE>
+
+"""
     return few_shot_prompt 
 
 def get_batched_prompt(contexts:list[str])-> str:
@@ -201,20 +205,51 @@ Only return the final output in this format:
     return prompt
 
 
-def retry_prompt(contexts:list[str],error_list:list[str])->str:
+def retry_prompt(contexts: list[str], error_list: list[str], required_fields: list[list[str]] = None) -> str:
+    if required_fields:
+        prompt = get_batched_prompt_with_fields(contexts, required_fields)
+    else:
+        prompt = get_batched_prompt(contexts)
 
-    prompt = get_batched_prompt(contexts)
-
-    error_prompt ="""
-            please make sure model do not perform below errors, for each invoice
-            """ 
+    error_prompt = "\nAvoid these errors for each invoice:\n"
     
     for i, errors in enumerate(error_list, 1):
-
         error_prompt += f"\n<INVOICE_{i}>\n"
         for err in errors:
-            error_prompt += f"\n{err.strip()}\n"
-        error_prompt += f"\n</INVOICE_{i}>\n"
+            error_prompt += f"- {err.strip()}\n"
+        error_prompt += f"</INVOICE_{i}>\n"
 
     prompt += error_prompt
+    return prompt
+
+def get_batched_prompt_with_fields(contexts: list[str], required_fields: list[list[str]]) -> str:
+    prompt = f"""
+You are provided with multiple invoice texts. Your task is to extract ONLY the specified entities for each invoice.
+
+Instructions:
+1. Extract ONLY the fields specified for each invoice.
+2. For missing fields, return null.
+3. DO NOT return **None**, use **null**.
+4. Use Python list format for multiple items.
+
+# Example format:
+{few_shot()}
+
+"""
+
+    for i, (context, fields) in enumerate(zip(contexts, required_fields), 1):
+        prompt += f"\n<INVOICE_{i}>\n"
+        prompt += f"Required fields:\n [{', '.join(fields)}]\n"
+        prompt += f"Context :\n{context.strip()}\n"
+        prompt += f"</INVOICE_{i}>\n"
+
+    prompt += """
+
+Respond with a **Python list of JSON strings**, extracting ONLY the required fields for each invoice:
+[
+  '{"FIELD1": "...", "FIELD2": "..."}',
+  '{"FIELD1": "...", "FIELD2": "..."}',
+  ...
+]
+"""
     return prompt

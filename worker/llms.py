@@ -10,9 +10,10 @@ import google.generativeai as genai
 from google.api_core import exceptions
 
 from worker import utils
+from worker.field_extraction_metrics import evaluate_field_extraction
 from worker.shared import InvoiceData
 from worker.prompts import retry_prompt
-from worker.prompts import get_batched_prompt
+from worker.prompts import get_batched_prompt,get_batched_prompt_with_fields
 
 
 
@@ -66,7 +67,9 @@ class gemini:
         build a single prompt with strict instructions
         """
 
-        self.prompt = get_batched_prompt(self.inovices)
+        # self.prompt = get_batched_prompt(self.inovices)
+        self.prompt = get_batched_prompt_with_fields(self.inovices,self.required_fields)
+
         return {"status":"success","error" : "", "details": ""}
 
     def call_model(self)->dict:
@@ -107,7 +110,7 @@ class gemini:
             self.validated_response = []
             self.error_response = []
             for i in range(len(extracted_responses)):
-                validation_error = utils.validate_extracted_data(extracted_responses[i], self.inovices[i])
+                validation_error = utils.validate_extracted_data(extracted_responses[i], self.inovices[i],self.required_fields[i])
                 if validation_error:
                     self.error_response.append((i,validation_error))
                 
@@ -132,9 +135,10 @@ class gemini:
         
         ids, erros = map(list, zip(*self.error_response))
         erroneous_context = [self.inovices[_] for _ in ids]
+        erroneous_required_filed = [self.required_fields[_] for _ in ids]
 
         for i in range(3):
-            prompt = retry_prompt(erroneous_context, erros)
+            prompt = retry_prompt(erroneous_context, erros, erroneous_required_filed)
 
             response = self.model.generate_content(prompt)
             extracted_responses = json.loads(response.text)
@@ -156,6 +160,7 @@ class gemini:
             # Remove successful items in reverse order
             for j in reversed(successful_indices):
                 erroneous_context.pop(j)
+                erroneous_required_filed.pop(j)
                 erros.pop(j)
                 ids.pop(j)
 
@@ -165,7 +170,8 @@ class gemini:
             
             # Update error list for next iteration
             erros = remaining_errors
-            
+
+        self.error_response = erros    
         return {"status":"failed","error": "Failed to generate correct response in 3 attempts", "details": ""}
 
 
@@ -174,7 +180,7 @@ class gemini:
         add evalution and summery 
         """
 
-        self.evalution_result = utils.evaluate(self.output,self.validated_response)
+        self.evalution_result = evaluate_field_extraction(self.validated_response,self.output)
 
         return { "evalution_result " : self.evalution_result, "predictions" : self.validated_response}
 
