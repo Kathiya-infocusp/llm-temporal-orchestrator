@@ -50,3 +50,10 @@ echo "Getting workflow result..."
 RESULT=$(curl -s "http://localhost:8000/workflows/$WORKFLOW_ID/result")
 echo "Result: $RESULT"
 echo "✅ Test complete."
+
+
+# Cleanup
+echo "🧹 Cleaning up..."
+docker-compose down
+
+echo "✅ All tests completed!"
