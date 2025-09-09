@@ -13,7 +13,14 @@ RUN uv sync
 
  
 # Copy the entire project
-COPY .. .
+COPY ../api .
+COPY ../tests .
+COPY ../worker .
+COPY ../.env .
+COPY ../README.md .
+COPY ../run_local.sh . 
+COPY ../run_tests.sh . 
+COPY ../__init__.py . 
 
 
 ENV PYTHONPATH=/app

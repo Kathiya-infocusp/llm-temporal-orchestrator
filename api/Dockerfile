@@ -12,7 +12,17 @@ RUN uv venv
 RUN uv sync 
 
 
-COPY .. .
+COPY ../api .
+COPY ../tests .
+COPY ../worker .
+COPY ../.env .
+COPY ../README.md .
+COPY ../run_local.sh . 
+COPY ../run_tests.sh . 
+COPY ../__init__.py . 
+
+
+
 
 # Set PYTHONPATH so we can import from worker directory
 ENV PYTHONPATH=/app
