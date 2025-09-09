@@ -8,13 +8,13 @@ RUN pip install uv
 
 COPY ../pyproject.toml .
 
-RUN uv venv
+# RUN uv venv
 RUN uv sync 
 
 
-COPY ../api .
-COPY ../tests .
-COPY ../worker .
+COPY ../api ./api
+COPY ../tests ./tests
+COPY ../worker ./worker
 COPY ../.env .
 COPY ../README.md .
 COPY ../run_local.sh . 

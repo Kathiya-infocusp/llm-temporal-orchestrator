@@ -25,7 +25,7 @@ services:
     depends_on:
       - temporal
     volumes:
-      - .:/app
+      - ./runs:/app/runs
 
   # Worker Service
   worker:
@@ -39,9 +39,10 @@ services:
     depends_on:
       - temporal
     volumes:
-      - .:/app
+      - ./runs:/app/runs
 
 
 # Volumes for local file storage
 volumes:
   temporal-data:
+  # venv:
