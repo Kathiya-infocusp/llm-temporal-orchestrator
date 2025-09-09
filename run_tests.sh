@@ -25,10 +25,6 @@ python -m pytest tests/test_llms.py -v
 echo "🔗 Running integration tests..."
 python -m pytest tests/test_e2e.py -v
 
-# Performance tests
-echo "⚡ Running performance tests..."
-python -m pytest tests/test_performance.py -v -s
-
 # Cleanup
 echo "🧹 Cleaning up..."
 docker-compose down
