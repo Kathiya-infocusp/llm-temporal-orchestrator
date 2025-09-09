@@ -6,7 +6,12 @@ docker-compose up -d
 
 # Wait for services to be ready
 echo "Waiting for services to start..."
-sleep 10
+echo "Checking API readiness..."
+while ! curl -s http://localhost:8000/docs > /dev/null 2>&1; do
+  echo "API not ready, waiting..."
+  sleep 2
+done
+echo "API is ready!"
 
 # Test workflow trigger using test.json
 echo "Testing workflow with test.json..."
