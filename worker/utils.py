@@ -221,16 +221,24 @@ def evaluate(gt_data: List[Dict], pred_data: List[Dict]) -> Dict:
     return final_result
 
 def log_structured(workflow_id: str, activity: str, **kwargs):
-    
-    log_dir = Path(f"./runs/{workflow_id}")
-    log_dir.mkdir(parents=True, exist_ok=True)
-    
-    log_entry = {
-        "ts": datetime.utcnow().isoformat() + "Z",
-        "workflowId": workflow_id,
-        "activity": activity,
-        **kwargs
-    }
-    
-    with open(log_dir / "workflow.log", "a") as f:
-        f.write(json.dumps(log_entry) + "\n")
+    import sys
+    try:
+        log_dir = Path(f"./runs/{workflow_id}")
+        log_dir.mkdir(parents=True, exist_ok=True)
+        
+        log_entry = {
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "workflowId": workflow_id,
+            "activity": activity,
+            **kwargs
+        }
+        log_file = log_dir / "workflow.log"
+        # Ensure the file exists first
+        log_file.touch(exist_ok=True)
+        with open(log_file, "a", encoding="utf-8") as f:
+            f.write(json.dumps(log_entry) + "\n")
+            f.flush()  # Ensure data is written immediately
+        
+    except Exception as e:
+        # Fallback logging to stderr if file logging fails
+        print(f"ERROR: Log directory path: {log_dir if 'log_dir' in locals() else 'undefined'}", file=sys.stderr)

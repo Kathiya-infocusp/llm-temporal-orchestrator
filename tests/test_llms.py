@@ -16,7 +16,7 @@ class TestGeminiModel(unittest.TestCase):
         self.test_data = InvoiceData(
             context_input=["Test invoice content INVOICE_NUMBER : 123 \n TOTAL_AMOUNT : 100"],
             output=[{"INVOICE_NUMBER": "123", "TOTAL_AMOUNT": "100"}],
-            fields_to_extract=["INVOICE_NUMBER", "TOTAL_AMOUNT"],
+            fields_to_extract=[["INVOICE_NUMBER", "TOTAL_AMOUNT"]],
             workflow_id = "workflow-test"
         )
     
@@ -54,17 +54,7 @@ class TestGeminiModel(unittest.TestCase):
         mock_response = MagicMock()
         mock_response = """[{
             "INVOICE_NUMBER": "123", 
-            "TOTAL_AMOUNT": "100", 
-            "DATE_OF_ISSUE": null, 
-            "BILLED_TO": null,
-            "ADDRESS": null,
-            "ITEM_DESCRIPTION": null,
-            "QTY": null,
-            "UNIT_PRICE": null,
-            "AMOUNT": null,
-            "BANK_NAME": null,
-            "ACCOUNT_NAME": null,
-            "ACCOUNT_NUMBER": null}]"""
+            "TOTAL_AMOUNT": "100"}]"""
         self.model.model_reponse = mock_response
         
         result = self.model.parse_and_validate()

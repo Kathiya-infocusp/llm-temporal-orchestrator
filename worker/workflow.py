@@ -79,10 +79,5 @@ class InformationExtraction:
         )
 
 
-        return finalize_confirmation
-
-
-
-
-        
-
+        return finalize_confirmation  
+    

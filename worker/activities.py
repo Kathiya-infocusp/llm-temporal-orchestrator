@@ -59,7 +59,12 @@ class LLMActivities:
             )
 
             return confirmation
-        except Exception:
+        except Exception as e:
+            utils.log_structured(
+                data.workflow_id, "call_model",
+                attempt=activity.info().attempt, status="failed",
+                error=str(e)
+            )
             activity.logger.exception("call model failed")
             raise 
 
