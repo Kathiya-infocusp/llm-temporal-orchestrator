@@ -8,8 +8,12 @@ A Python service that answers questions by orchestrating an LLM workflow with Te
 
 ### Set up environment:
 ```bash
-cp .env.example .env
 # Add your Gemini API key to .env
+cp .env.example .env
+
+# set up dependencies using uv
+uv sync
+
 ```
 ## Reproducible Local Run
 
