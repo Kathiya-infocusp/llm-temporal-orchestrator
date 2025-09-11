@@ -19,11 +19,11 @@ echo "Running test suites..."
 
 # Unit tests
 echo "Running unit tests..."
-python -m pytest tests/test_llms.py -v
+uv run python -m pytest tests/test_llms.py -v
 
 # Integration tests  
 echo "Running integration tests..."
-python -m pytest tests/test_e2e.py -v
+uv run python -m pytest tests/test_e2e.py -v
 
 # Cleanup
 echo "Cleaning up..."
